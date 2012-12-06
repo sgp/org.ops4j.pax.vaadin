@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Achim Nierbeck.
+ * Copyright 2012 Achim Nierbeck, Scott Parkerson.
  *
  * Licensed  under the  Apache License,  Version 2.0  (the "License");
  * you may not use  this file  except in  compliance with the License.
@@ -17,109 +17,51 @@
  */
 package org.ops4j.pax.vaadin.internal.servlet;
 
-import java.io.IOException;
-import java.util.concurrent.Callable;
-
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.ops4j.pax.swissbox.core.ContextClassLoaderUtils;
 
 import com.vaadin.Application;
 import com.vaadin.terminal.gwt.server.AbstractApplicationServlet;
 
-public class VaadinApplicationServlet extends HttpServlet {
+public class VaadinApplicationServlet extends AbstractApplicationServlet {
 
 	private static final long serialVersionUID = 1L;
-	private ClassLoader classLoader;
-	private Servlet servlet;
+	
+	protected Class<? extends Application> appClazz = null;
 
-	public VaadinApplicationServlet(Application application) {
-		classLoader = application.getClass().getClassLoader();
-		servlet = new AppServlet(application);
+	public VaadinApplicationServlet(Class<? extends Application> appClazz) {
+	    this.appClazz = appClazz;
 	}
-
+	
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		service(req, resp);
+	protected ClassLoader getClassLoader()
+	{
+	    return appClazz.getClassLoader();
 	}
 
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		service(req, resp);
-	}
+    @Override
+    protected Application getNewApplication(HttpServletRequest request) throws ServletException
+    {
+        try
+        {
+            return appClazz.newInstance();
+        }
+        catch (InstantiationException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (IllegalAccessException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null; // Should not happen
+    }
 
-	@Override
-	public void service(final HttpServletRequest request,
-			final HttpServletResponse response) throws ServletException, IOException {
-
-		try {
-			ContextClassLoaderUtils.doWithClassLoader(classLoader,
-					new Callable<Void>() {
-
-						public Void call() throws Exception {
-							servlet.service(request, response);
-							return null;
-						}
-
-					});
-		} catch (ServletException e) {
-			// re-thrown
-			throw e;
-		} catch (RuntimeException e) {
-			// re-thrown
-			throw e;
-		} catch (Exception ignore) {
-			// ignored as it should never happen
-		}
-	}
-
-	@Override
-	public void init(final ServletConfig config) throws ServletException {
-		try {
-			ContextClassLoaderUtils.doWithClassLoader(classLoader,
-					new Callable<Void>() {
-
-						public Void call() throws Exception {
-							servlet.init(config);
-							return null;
-						}
-
-					});
-		} catch (ServletException e) {
-			// re-thrown
-			throw e;
-		} catch (RuntimeException e) {
-			// re-thrown
-			throw e;
-		} catch (Exception ignore) {
-			// ignored as it should never happen
-		}
-	}
-
-	private class AppServlet extends AbstractApplicationServlet {
-
-		private final Application application;
-
-		public AppServlet(Application application) {
-			this.application = application;
-		}
-
-		@Override
-		protected Application getNewApplication(HttpServletRequest request) throws ServletException {
-			return application;
-		}
-
-		@Override
-		protected Class<? extends Application> getApplicationClass() throws ClassNotFoundException {
-			return application.getClass();
-		}
-
-	}
+    @Override
+    protected Class<? extends Application> getApplicationClass() throws ClassNotFoundException
+    {
+        return this.appClazz;
+    }
 }

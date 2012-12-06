@@ -17,8 +17,6 @@
  */
 package org.ops4j.pax.vaadin.internal.extender;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -37,7 +35,7 @@ import org.osgi.util.tracker.BundleTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vaadin.Application;
+
 
 public class PaxVaadinBundleTracker extends BundleTracker  {
 
@@ -58,61 +56,35 @@ public class PaxVaadinBundleTracker extends BundleTracker  {
 			String applicationClass = (String) bundle.getHeaders().get(
 					org.ops4j.pax.vaadin.Constants.VAADIN_APPLICATION);
 			String alias = (String) bundle.getHeaders().get("Vaadin-Alias");
-			Application application = null;
-			try {
-				Class appClazz = bundle.loadClass(applicationClass);
+            
+			try 
+			{
+			    VaadinApplicationServlet servlet = new VaadinApplicationServlet(bundle.loadClass(applicationClass));
+			    if (servlet != null) {
+	                 
 
-				Constructor[] ctors = appClazz.getDeclaredConstructors();
-				Constructor ctor = null;
-				for (int i = 0; i < ctors.length; i++) {
-					ctor = ctors[i];
-					if (ctor.getGenericParameterTypes().length == 0)
-						break;
-				}
-				ctor.setAccessible(true);
-				application = (Application) ctor.newInstance();
+	                Map<String, Object> props = new Hashtable<String, Object>();
+	                props.put(org.ops4j.pax.vaadin.Constants.ALIAS, alias);
 
-			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InstantiationException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+                    final String widgetset = Util.findWidgetset(bundle);
+	                if (widgetset != null) {
+	                    props.put("init-prefix", "init.");
+	                    props.put("init.widgetset", widgetset);
+	                }
+
+	                ServiceRegistration registeredServlet = bundle
+	                        .getBundleContext().registerService(
+	                                HttpServlet.class.getName(), servlet,
+	                                (Dictionary) props);
+
+	                registeredServlets.put(bundle, registeredServlet);
+	            }
+
 			}
-
-			final String widgetset = Util.findWidgetset(bundle);
-
-			if (application != null) {
-				VaadinApplicationServlet servlet = new VaadinApplicationServlet(application);
-
-				Map<String, Object> props = new Hashtable<String, Object>();
-				props.put(org.ops4j.pax.vaadin.Constants.ALIAS, alias);
-
-				if (widgetset != null) {
-					props.put("init-prefix", "init.");
-					props.put("init.widgetset", widgetset);
-				}
-
-				ServiceRegistration registeredServlet = bundle
-						.getBundleContext().registerService(
-								HttpServlet.class.getName(), servlet,
-								(Dictionary) props);
-
-				registeredServlets.put(bundle, registeredServlet);
+		    catch (ClassNotFoundException ex)
+			{
+			    logger.error("Cannot find class " + applicationClass);
 			}
-
 		}
 
 		if (Util.isResourceBundle(bundle)) {
