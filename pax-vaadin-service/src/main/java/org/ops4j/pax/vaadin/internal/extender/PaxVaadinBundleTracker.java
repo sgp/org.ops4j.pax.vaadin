@@ -57,7 +57,7 @@ public class PaxVaadinBundleTracker extends BundleTracker  {
 			logger.debug("found a vaadin-app bundle: {}", bundle);
 			String applicationClass = (String) bundle.getHeaders().get(
 					org.ops4j.pax.vaadin.Constants.VAADIN_APPLICATION);
-			String alias = (String) bundle.getHeaders().get("Vaadin-Alias");
+			String alias = (String) bundle.getHeaders().get(org.ops4j.pax.vaadin.Constants.VAADIN_ALIAS);
 			Application application = null;
 			try {
 				Class appClazz = bundle.loadClass(applicationClass);
