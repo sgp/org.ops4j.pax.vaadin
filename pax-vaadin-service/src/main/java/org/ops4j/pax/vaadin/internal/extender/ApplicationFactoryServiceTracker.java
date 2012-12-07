@@ -35,7 +35,7 @@ public class ApplicationFactoryServiceTracker extends ServiceTracker {
     public Object addingService(ServiceReference reference) {
         ApplicationFactory factory = (ApplicationFactory) super.addingService(reference);
         FactoryServlet servlet = new FactoryServlet(factory);
-        Dictionary props = new Properties();
+        Dictionary<Object, Object> props = new Properties();
         
         for(String key : reference.getPropertyKeys()) {
             props.put(key, reference.getProperty(key));

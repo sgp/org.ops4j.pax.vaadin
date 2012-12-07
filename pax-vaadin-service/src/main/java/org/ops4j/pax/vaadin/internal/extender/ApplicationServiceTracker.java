@@ -50,7 +50,7 @@ public class ApplicationServiceTracker extends ServiceTracker  {
 	public Object addingService(ServiceReference reference) {
         Application application = (Application) super.addingService(reference);
         Servlet servlet = new VaadinApplicationServlet(application.getClass());
-        Dictionary props = new Properties();
+        Dictionary<Object, Object> props = new Properties();
         
         for(String key : reference.getPropertyKeys()) {
             props.put(key, reference.getProperty(key));
@@ -79,7 +79,7 @@ public class ApplicationServiceTracker extends ServiceTracker  {
 			service.addResources(bundle);
 		}
         
-        m_serviceRegistration.put(application, context.registerService(Servlet.class.getName(), servlet, (Dictionary) props));
+        m_serviceRegistration.put(application, context.registerService(Servlet.class.getName(), servlet, (Dictionary<Object, Object>) props));
         
         return application;
 	}

@@ -105,6 +105,7 @@ public class VaadinApplicationServlet extends HttpServlet {
 
 	private class AppServlet extends AbstractApplicationServlet {
 
+		private static final long serialVersionUID = -6109801337822803760L;
 		private final Class<? extends Application> appClazz;
 
 		public AppServlet(Class<? extends Application> appClazz) {

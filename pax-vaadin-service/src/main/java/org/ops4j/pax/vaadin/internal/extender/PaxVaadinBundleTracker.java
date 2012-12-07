@@ -17,8 +17,6 @@
  */
 package org.ops4j.pax.vaadin.internal.extender;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -58,7 +56,7 @@ public class PaxVaadinBundleTracker extends BundleTracker  {
 			String applicationClass = (String) bundle.getHeaders().get(
 					org.ops4j.pax.vaadin.Constants.VAADIN_APPLICATION);
 			String alias = (String) bundle.getHeaders().get(org.ops4j.pax.vaadin.Constants.VAADIN_ALIAS);
-			Class<? extends Application> appClazz = null;
+			Class<?> appClazz = null;
 			try {
 			    appClazz = bundle.loadClass(applicationClass);
 				
@@ -72,8 +70,10 @@ public class PaxVaadinBundleTracker extends BundleTracker  {
 
 			final String widgetset = Util.findWidgetset(bundle);
 
-			if (appClazz != null) {
-				VaadinApplicationServlet servlet = new VaadinApplicationServlet(appClazz);
+			if (appClazz != null && appClazz.isInstance(Application.class)) {
+				
+				@SuppressWarnings("unchecked")
+				VaadinApplicationServlet servlet = new VaadinApplicationServlet((Class<? extends Application>) appClazz);
 
 				Map<String, Object> props = new Hashtable<String, Object>();
 				props.put(org.ops4j.pax.vaadin.Constants.ALIAS, alias);
@@ -86,9 +86,12 @@ public class PaxVaadinBundleTracker extends BundleTracker  {
 				ServiceRegistration registeredServlet = bundle
 						.getBundleContext().registerService(
 								HttpServlet.class.getName(), servlet,
-								(Dictionary) props);
+								(Dictionary<Object, Object>) props);
 
 				registeredServlets.put(bundle, registeredServlet);
+			}
+			else {
+				logger.error("Class is not an instance of {}", Application.class.toString());
 			}
 
 		}
